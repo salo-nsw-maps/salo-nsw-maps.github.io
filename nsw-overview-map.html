@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	
+	<title>Choropleth Tutorial - Leaflet</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="imgs/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script src="https://unpkg.com/flatgeobuf@3.21.3/dist/flatgeobuf-geojson.min.js"></script>
+
+    <!-- <link rel="stylesheet" href="js/noUiSlider/dist/nouislider.css"/>
+    <script src="js/noUiSlider/dist/nouislider.js"></script> -->
+
+    <link rel="stylesheet" href="js/switchBasemap/L.switchBasemap.css"/>
+    <script src="js/switchBasemap/L.switchBasemap.js"></script>
+
+    <link rel="stylesheet" href="js/loading/Control.Loading.css"/>
+    <script src="js/loading/Control.Loading.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Falke-Design/LeafletSlider@latest/dist/leaflet.SliderControl.min.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		.leaflet-container {
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+	</style>
+
+	<style>
+        #map {
+            width: 100.0%;
+            height: 100.0%;
+            left: 0.0%;
+            top: 0.0%;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 { margin: 0 0 5px; color: #777; }
+        .legend { text-align: left; line-height: 18px; color: #555; }
+        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", async () => { 
+
+    var map = L.map('map',
+        {
+            center: new L.LatLng(-32.67824334, 150.9500737),
+            zoom: 6,
+            loadingControl: true
+        }
+    );
+
+    new L.basemapsSwitcher([
+            {
+                layer: L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="http://cartodb.com/attributions">CartoDB</a>, CartoDB <a href ="http://cartodb.com/attributions">attributions</a>'
+                }).addTo(map),
+                icon: 'imgs/carto-basemap.png',
+                name: 'Carto'
+            },
+            {
+                layer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+                }),
+                icon: 'imgs/opentopo-basemap.png',
+                name: 'Opentopo'
+            },
+        ],
+        { position: 'bottomleft' }
+    ).addTo(map);
+
+	var info = L.control();
+	info.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'info');
+		this.update();
+		return this._div;
+	};
+	info.update = function (props) {
+		this._div.innerHTML = '<h4>NSW Lidar Sites</h4>' +  (props ?
+			'<b>' + props.Site + '</b><br />' + props.Year : 'Hover over a site');
+	};
+	info.addTo(map);
+
+    // get color depending on density_int value
+	function getColor(d) {
+		return d > 26  ? '#ffffcc' :
+			d > 22  ? '#c7e9b4' :
+			d > 17  ? '#7fcdbb' :
+			d > 13  ? '#41b6c4' :
+			d > 9   ? '#1d91c0' :
+			d > 4   ? '#225ea8' : '#0c2c84';
+	}
+
+    // get color depending on veg class value
+    function getVegColor(d) {
+		return  d == 14 ? '#b2ffba' :
+		        d == 13 ? '#ff4cd5' :
+		        d == 12 ? '#a6cee3' :
+                d == 11 ? '#1f78b4' :
+                d == 10 ? '#b2df8a' :
+                d == 9 ? '#33a02c' :
+                d == 8 ? '#fb9a99' :
+                d == 7 ? '#e31a1c' :
+                d == 6 ? '#fdbf6f' :
+                d == 5 ? '#ff7f00' :
+                d == 4 ? '#cab2d6' :
+                d == 3 ? '#6a3d9a' :
+                d == 2 ? '#ffff99' :
+                d == 1 ? '#b15928' : '#9eff6d' ;
+	}
+
+	function style(feature) {
+		return {
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+            stroke: false,
+			dashArray: '3',
+			fillOpacity: 0.7,
+			fillColor: getColor(feature.properties.density_int)
+		};
+	}
+
+    function vegStyle(feature) {
+		return {
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+            stroke: false,
+			dashArray: '3',
+			fillOpacity: 0.7,
+			fillColor: getVegColor(feature.properties.class)
+		};
+	}
+
+	function highlightFeature(e) {
+		var layer = e.target;
+
+		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+			layer.bringToFront();
+		}
+
+		info.update(layer.feature.properties);
+	}
+
+	function zoomToFeature(e) {
+		map.fitBounds(e.target.getBounds());
+	}
+
+	function onEachFeature(feature, layer) {
+		layer.on({
+			mouseover: highlightFeature,
+			click: zoomToFeature
+		});
+	}
+
+    var density_layer = L.layerGroup();
+    var veg_layer = L.layerGroup();
+    var sites_layer = L.layerGroup();
+
+    const pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    for await (let feature of flatgeobuf.deserialize(pt_response.body, undefined, undefined)) {
+        density_layer.addLayer(L.geoJson(feature, {style: style}));
+    }
+    density_layer.addTo(map);
+    
+    const veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    map.fire('dataloading');
+    for await (let feature of flatgeobuf.deserialize(veg_response.body, undefined, undefined)) {
+        veg_layer.addLayer(L.geoJson(feature, {style: vegStyle}));
+    }
+    map.fire('dataload');
+
+    const site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    for await (let feature of flatgeobuf.deserialize(site_response.body, undefined, undefined)) {
+        const defaultStyle = { 
+            color: 'white', 
+            weight: 2,
+            opacity: 0.5,
+            fillOpacity: 0.
+        };
+        sites_layer.addLayer(
+            L.geoJson(
+                feature,
+                {
+                    style: defaultStyle,
+                    onEachFeature: onEachFeature,
+                    time: feature.properties.Year
+                }
+            )
+        );
+    }
+    sites_layer.addTo(map);
+
+	map.attributionControl.addAttribution('lidar+veg &copy; <a href="https://www.rfs.nsw.gov.au/">NSW RFS</a>');
+
+    var layerControl = L.control.layers({},
+        {
+            'Veg Formations': veg_layer,
+            'Lidar Point Density': density_layer,
+            'NSW Sites': sites_layer,
+        }
+    ).addTo(map);
+
+    map.on("overlayadd", function (event) {
+        sites_layer.eachLayer(function (layer) {
+            layer.bringToFront();
+        });
+    });
+
+
+    // date slider control
+    // var sliderControl = L.control.sliderControl({layer:sites_layer});
+    var sliderControl = L.control.sliderControl(
+        {
+            position: "topright",
+            layer: sites_layer,
+            range: true
+        }
+    );
+    map.addControl(sliderControl);
+    sliderControl.startSlider();
+
+    // point density legend
+	var pt_legend = L.control({position: 'bottomright'});
+	pt_legend.onAdd = function (map) {
+
+		var div = L.DomUtil.create('div', 'info legend');
+		var grades = [0, 4, 9, 13, 17, 22, 26];
+		var labels = [];
+		var from, to;
+
+		for (var i = 0; i < grades.length; i++) {
+			from = grades[i];
+			to = grades[i + 1];
+
+			labels.push(
+				'<i style="background:' + getColor(from + 1) + '"></i> ' +
+				from + (to ? '&ndash;' + to : '+'));
+		}
+
+		div.innerHTML = '<h4>pts / sq. m</h4>' + labels.join('<br>');
+		return div;
+	};
+	pt_legend.addTo(map);
+
+    // veg class legend
+    var veg_legend = L.control({position: 'bottomright'});
+	veg_legend.onAdd = function (map) {
+
+		var div = L.DomUtil.create('div', 'info legend');
+		var grades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+		var labels = [];
+		var from, to;
+
+		for (var i = 0; i < grades.length; i++) {
+			from = grades[i];
+
+			labels.push(
+				'<i style="background:' + getVegColor(from + 1) + '"></i> ' + from
+            );
+		}
+
+		div.innerHTML = '<h4>Veg Class</h4>' + labels.join('<br>');
+		return div;
+	};
+	veg_legend.addTo(map);
+
+});
+</script>
+
+
+
+</body>
+</html>
