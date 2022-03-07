@@ -16,6 +16,9 @@
     <!-- <link rel="stylesheet" href="js/noUiSlider/dist/nouislider.css"/>
     <script src="js/noUiSlider/dist/nouislider.js"></script> -->
 
+    <link rel="stylesheet" href="js/Leaflet.Control.Opacity/dist/L.Control.Opacity.css"/>
+    <script src="js/Leaflet.Control.Opacity/dist/L.Control.Opacity.js"></script>
+
     <link rel="stylesheet" href="js/switchBasemap/L.switchBasemap.css"/>
     <script src="js/switchBasemap/L.switchBasemap.js"></script>
 
@@ -65,7 +68,11 @@
 <div id='map'></div>
 
 <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", async () => { 
+    document.addEventListener("DOMContentLoaded", async () => {
+
+    
+    var vegOpacity = 1.0;
+    var densityOpacity = 1.0;
 
     var map = L.map('map',
         {
@@ -134,14 +141,14 @@
                 d == 1 ? '#b15928' : '#9eff6d' ;
 	}
 
-	function style(feature) {
+	function densityStyle(feature) {
 		return {
 			weight: 2,
-			opacity: 1,
+			opacity: densityOpacity,
 			color: 'white',
             stroke: false,
 			dashArray: '3',
-			fillOpacity: 0.7,
+			fillOpacity: densityOpacity,
 			fillColor: getColor(feature.properties.density_int)
 		};
 	}
@@ -149,11 +156,11 @@
     function vegStyle(feature) {
 		return {
 			weight: 2,
-			opacity: 1,
+			opacity: vegOpacity,
 			color: 'white',
             stroke: false,
 			dashArray: '3',
-			fillOpacity: 0.7,
+			fillOpacity: vegOpacity,
 			fillColor: getVegColor(feature.properties.class)
 		};
 	}
@@ -183,20 +190,23 @@
     var veg_layer = L.layerGroup();
     var sites_layer = L.layerGroup();
 
-    const pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    // var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
     for await (let feature of flatgeobuf.deserialize(pt_response.body, undefined, undefined)) {
-        density_layer.addLayer(L.geoJson(feature, {style: style}));
+        density_layer.addLayer(L.geoJson(feature, {style: densityStyle}));
     }
     density_layer.addTo(map);
     
-    const veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    // var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
     map.fire('dataloading');
     for await (let feature of flatgeobuf.deserialize(veg_response.body, undefined, undefined)) {
         veg_layer.addLayer(L.geoJson(feature, {style: vegStyle}));
     }
     map.fire('dataload');
 
-    const site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    // const site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
     for await (let feature of flatgeobuf.deserialize(site_response.body, undefined, undefined)) {
         const defaultStyle = { 
             color: 'white', 
@@ -217,34 +227,54 @@
     }
     sites_layer.addTo(map);
 
+    var layers = {
+        'Veg Formations': veg_layer,
+        'Lidar Point Density': density_layer,
+        'NSW Sites': sites_layer,
+    }
+
 	map.attributionControl.addAttribution('lidar+veg &copy; <a href="https://www.rfs.nsw.gov.au/">NSW RFS</a>');
 
     var layerControl = L.control.layers({},
+        layers
+    ).addTo(map);
+
+    // Opacity layer slider
+    function vectorLayerOpacity(layer, opacity) {
+        if (layer.options.name == "density") {
+            densityOpacity = opacity;
+            density_layer.eachLayer(function (layer) {
+                layer.setStyle(densityStyle);
+            })
+        } else if (layer.options.name == "veg") {
+            vegOpacity = opacity;
+            veg_layer.eachLayer(function (layer) {
+                layer.setStyle(vegStyle);
+            })
+        }
+
+    }
+
+    veg_layer.options['name'] = 'veg'
+    density_layer.options['name'] = 'density'
+
+    L.control.opacity(
         {
             'Veg Formations': veg_layer,
-            'Lidar Point Density': density_layer,
-            'NSW Sites': sites_layer,
+            'Lidar Point Density': density_layer
+        },
+        {
+            label: 'Layers Opacity',
+            vectorLayerOpacity: vectorLayerOpacity
         }
-    ).addTo(map);
+    ).addTo(map); 
+
 
     map.on("overlayadd", function (event) {
         sites_layer.eachLayer(function (layer) {
             layer.bringToFront();
         });
     });
-
-
-    // date slider control
-    // var sliderControl = L.control.sliderControl({layer:sites_layer});
-    var sliderControl = L.control.sliderControl(
-        {
-            position: "topright",
-            layer: sites_layer,
-            range: true
-        }
-    );
-    map.addControl(sliderControl);
-    sliderControl.startSlider();
 
     // point density legend
 	var pt_legend = L.control({position: 'bottomright'});
