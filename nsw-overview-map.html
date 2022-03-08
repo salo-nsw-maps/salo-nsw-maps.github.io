@@ -19,18 +19,16 @@
     <link rel="stylesheet" href="js/Leaflet.Control.Opacity/dist/L.Control.Opacity.css"/>
     <script src="js/Leaflet.Control.Opacity/dist/L.Control.Opacity.js"></script>
 
-    <link rel="stylesheet" href="js/switchBasemap/L.switchBasemap.css"/>
-    <script src="js/switchBasemap/L.switchBasemap.js"></script>
+    <!-- <link rel="stylesheet" href="js/switchBasemap/L.switchBasemap.css"/>
+    <script src="js/switchBasemap/L.switchBasemap.js"></script> -->
 
     <link rel="stylesheet" href="js/loading/Control.Loading.css"/>
     <script src="js/loading/Control.Loading.js"></script>
 
-    <script src="https://rawgithub.com/mylen/leaflet.TileLayer.WMTS/master/leaflet-tilelayer-wmts.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/Falke-Design/LeafletSlider@latest/dist/leaflet.SliderControl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Falke-Design/LeafletSlider@latest/dist/leaflet.SliderControl.min.js"></script> -->
 
 	<style>
 		html, body {
@@ -83,32 +81,6 @@
             loadingControl: true
         }
     );
-
-    // new L.basemapsSwitcher([
-    //         {
-    //             layer: L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-    //             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="http://cartodb.com/attributions">CartoDB</a>, CartoDB <a href ="http://cartodb.com/attributions">attributions</a>'
-    //             }).addTo(map),
-    //             icon: 'imgs/carto-basemap.png',
-    //             name: 'Carto'
-    //         },
-    //         // {
-    //         //     layer: L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}.png', {
-    //         //         attribution: 'Esri: &copy; <a href="https://doc.arcgis.com/en/data-appliance/2022/maps/world-hillshade-dark.htm">WorldHillshade</a>'
-    //         //     }),
-    //         //     icon: 'imgs/hillshade-basemap.png',
-    //         //     name: 'Hillshade'
-    //         // },
-    //         {
-    //             layer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    //             attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-    //             }),
-    //             icon: 'imgs/opentopo-basemap.png',
-    //             name: 'Opentopo'
-    //         }
-    //     ],
-    //     { position: 'bottomleft' }
-    // ).addTo(map);
 
     // Mapbox Token
     var token = "pk.eyJ1Ijoic2Fsby1jYmEiLCJhIjoiY2s5N3BjNmp6MTh6cDNocHUwejhwYmphcCJ9.J51wmP9Mj9Can3-XEv83Bg";
@@ -213,15 +185,15 @@
     var sites_layer = L.layerGroup();
     var veg_layer_classes = [];
 
-    // var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
-    var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
+    var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    // var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
     for await (let feature of flatgeobuf.deserialize(pt_response.body, undefined, undefined)) {
         density_layer.addLayer(L.geoJson(feature, {style: densityStyle}));
     }
     density_layer.addTo(map);
     
-    // var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
-    var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
+    var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    // var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
     map.fire('dataloading');
     for await (let feature of flatgeobuf.deserialize(veg_response.body, undefined, undefined)) {
         veg_layer.addLayer(L.geoJson(feature, {style: vegStyle}));
@@ -229,8 +201,8 @@
     }
     map.fire('dataload');
 
-    // var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
-    var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
+    var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    // var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
     for await (let feature of flatgeobuf.deserialize(site_response.body, undefined, undefined)) {
         const defaultStyle = { 
             color: 'white', 
@@ -260,7 +232,8 @@
 	map.attributionControl.addAttribution('lidar+veg &copy; <a href="https://www.rfs.nsw.gov.au/">NSW RFS</a>');
 
     var layerControl = L.control.layers({},
-        layers
+        layers,
+        {collapsed:false}
     ).addTo(map);
 
     // Opacity layer slider
@@ -300,6 +273,34 @@
         });
     });
 
+    // veg class legend
+    var veg_legend_items = [];
+    var counter = 0;
+    veg_layer.eachLayer(function (layer) {
+        veg_legend_items.push(
+            {
+                label: counter,
+                type: "circle",
+                radius: 6,
+                color: getVegColor(veg_layer_classes[counter]),
+                fillColor: getVegColor(veg_layer_classes[counter]),
+                // fillOpacity: 0.6,
+                // weight: 2,
+                layers: [layer]
+            }
+        )
+        counter++;
+    });
+    var veg_legend = L.control.Legend({
+        title: "Veg Class",
+        position: "topright",
+        collapsed: false,
+        symbolWidth: 24,
+        opacity: 1,
+        column: 2,
+        legends: veg_legend_items
+    }).addTo(map);
+
     // point density legend
 	var pt_legend = L.control({position: 'bottomright'});
 	pt_legend.onAdd = function (map) {
@@ -322,53 +323,6 @@
 		return div;
 	};
 	pt_legend.addTo(map);
-
-    // veg class legend
-    // var veg_legend = L.control({position: 'bottomright'});
-	// veg_legend.onAdd = function (map) {
-
-	// 	var div = L.DomUtil.create('div', 'info legend');
-	// 	var grades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-	// 	var labels = [];
-	// 	var from, to;
-
-	// 	for (var i = 0; i < grades.length; i++) {
-	// 		from = grades[i];
-
-	// 		labels.push(
-	// 			'<i style="background:' + getVegColor(from + 1) + '"></i> ' + from
-    //         );
-	// 	}
-
-	// 	div.innerHTML = '<h4>Veg Class</h4>' + labels.join('<br>');
-	// 	return div;
-	// };
-	// veg_legend.addTo(map);
-    var veg_legend_items = [];
-    var counter = 0;
-    veg_layer.eachLayer(function (layer) {
-        veg_legend_items.push(
-            {
-                label: counter,
-                type: "square",
-                radius: 6,
-                color: getVegColor(veg_layer_classes[counter]),
-                fillColor: getVegColor(veg_layer_classes[counter]),
-                // fillOpacity: 0.6,
-                // weight: 2,
-                layers: [layer]
-            }
-        )
-    });
-    var veg_legend = L.control.Legend({
-        title: "Veg Class",
-        position: "bottomright",
-        collapsed: false,
-        symbolWidth: 24,
-        opacity: 1,
-        column: 2,
-        legends: veg_legend_items
-    }).addTo(map);
 
 });
 </script>
