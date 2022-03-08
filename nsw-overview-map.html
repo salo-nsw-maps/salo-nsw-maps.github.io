@@ -194,16 +194,16 @@
     var veg_layer_classes = [];
     var density_layer_classes = [];
 
-    // var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
-    var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
+    var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    // var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
     for await (let feature of flatgeobuf.deserialize(pt_response.body, undefined, undefined)) {
         density_layer.addLayer(L.geoJson(feature, {style: densityStyle}));
         density_layer_classes.push(feature.properties.density_int);
     }
     density_layer.addTo(map);
     
-    // var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
-    var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
+    var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    // var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
     map.fire('dataloading');
     for await (let feature of flatgeobuf.deserialize(veg_response.body, undefined, undefined)) {
         veg_layer.addLayer(L.geoJson(feature, {style: vegStyle}));
@@ -211,8 +211,8 @@
     }
     map.fire('dataload');
 
-    // var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
-    var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
+    var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    // var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
     for await (let feature of flatgeobuf.deserialize(site_response.body, undefined, undefined)) {
         const defaultStyle = { 
             color: 'white', 
