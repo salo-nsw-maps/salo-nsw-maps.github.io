@@ -82,18 +82,24 @@
         }
     );
 
-    // Mapbox Token
-    var token = "pk.eyJ1Ijoic2Fsby1jYmEiLCJhIjoiY2s5N3BjNmp6MTh6cDNocHUwejhwYmphcCJ9.J51wmP9Mj9Can3-XEv83Bg";
+    // // Mapbox Token
+    // var token = "pk.eyJ1Ijoic2Fsby1jYmEiLCJhIjoiY2s5N3BjNmp6MTh6cDNocHUwejhwYmphcCJ9.J51wmP9Mj9Can3-XEv83Bg";
+    // L.tileLayer(
+    //     'https://api.mapbox.com/styles/v1/salo-cba/ck9wzygix02os1io34hlll17l/tiles/{z}/{x}/{y}?access_token='+token,
+    // ).addTo(map);
+    // L.tileLayer(
+    //     'https://api.mapbox.com/styles/v1/salo-cba/ck7l3r84h07xd1intnedvwd0i/tiles/{z}/{x}/{y}?access_token='+token,
+    //     {
+    //         attribution: '&copy <a href="https://www.mapbox.com/about/maps/">Mapbox</a>'
+    //     }    
+    // ).addTo(map);
 
     L.tileLayer(
-        'https://api.mapbox.com/styles/v1/salo-cba/ck9wzygix02os1io34hlll17l/tiles/{z}/{x}/{y}?access_token='+token,
-    ).addTo(map);
-    L.tileLayer(
-        'https://api.mapbox.com/styles/v1/salo-cba/ck7l3r84h07xd1intnedvwd0i/tiles/{z}/{x}/{y}?access_token='+token,
+        'http://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
         {
-            attribution: '&copy <a href="https://www.mapbox.com/about/maps/">Mapbox</a>'
+            attribution: '&copy <a href="https://www.esri.com/">Esri</a>'
         }    
-    ).addTo(map);
+    ).addTo(map);    
 
 	var info = L.control();
 	info.onAdd = function (map) {
