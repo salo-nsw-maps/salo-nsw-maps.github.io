@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	
-	<title>Choropleth Tutorial - Leaflet</title>
+	<title>NSW Lidar Overview</title>
 
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,7 +95,7 @@
     // ).addTo(map);
 
     L.tileLayer(
-        'http://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
         {
             attribution: '&copy <a href="https://www.esri.com/">Esri</a>'
         }    
@@ -115,13 +115,15 @@
 
     // get color depending on density_int value
 	function getColor(d) {
-		return d > 26  ? '#ffffcc' :
-			d > 22  ? '#c7e9b4' :
-			d > 17  ? '#7fcdbb' :
-			d > 13  ? '#41b6c4' :
-			d > 9   ? '#1d91c0' :
-			d > 4   ? '#225ea8' : '#0c2c84';
-	}
+        return d > 24 ? '#ffffd9':
+        d > 21 ? '#edf8b1':
+        d > 18 ? '#c7e9b4':
+        d > 15 ? '#7fcdbb':
+        d > 12 ? '#41b6c4':
+        d > 9 ? '#1d91c0':
+        d > 6 ? '#225ea8':
+        d > 3 ? '#253494': '#081d58';
+    }
 
     // get color depending on veg class value
     function getVegColor(d) {
@@ -190,16 +192,18 @@
     var veg_layer = L.layerGroup();
     var sites_layer = L.layerGroup();
     var veg_layer_classes = [];
+    var density_layer_classes = [];
 
-    var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
-    // var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
+    // var pt_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-point-density.fgb');
+    var pt_response = await fetch('http://127.0.0.1:8080/nsw-point-density.fgb');
     for await (let feature of flatgeobuf.deserialize(pt_response.body, undefined, undefined)) {
         density_layer.addLayer(L.geoJson(feature, {style: densityStyle}));
+        density_layer_classes.push(feature.properties.density_int);
     }
     density_layer.addTo(map);
     
-    var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
-    // var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
+    // var veg_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-veg-formations-grouped.fgb');
+    var veg_response = await fetch('http://127.0.0.1:8080/nsw-veg-formations-grouped.fgb');
     map.fire('dataloading');
     for await (let feature of flatgeobuf.deserialize(veg_response.body, undefined, undefined)) {
         veg_layer.addLayer(L.geoJson(feature, {style: vegStyle}));
@@ -207,8 +211,8 @@
     }
     map.fire('dataload');
 
-    var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
-    // var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
+    // var site_response = await fetch('https://storage.googleapis.com/salo-public-data/nsw/nsw-sites.fgb');
+    var site_response = await fetch('http://127.0.0.1:8080/nsw-sites.fgb');
     for await (let feature of flatgeobuf.deserialize(site_response.body, undefined, undefined)) {
         const defaultStyle = { 
             color: 'white', 
@@ -308,27 +312,32 @@
     }).addTo(map);
 
     // point density legend
-	var pt_legend = L.control({position: 'bottomright'});
-	pt_legend.onAdd = function (map) {
-
-		var div = L.DomUtil.create('div', 'info legend');
-		var grades = [0, 4, 9, 13, 17, 22, 26];
-		var labels = [];
-		var from, to;
-
-		for (var i = 0; i < grades.length; i++) {
-			from = grades[i];
-			to = grades[i + 1];
-
-			labels.push(
-				'<i style="background:' + getColor(from + 1) + '"></i> ' +
-				from + (to ? '&ndash;' + to : '+'));
-		}
-
-		div.innerHTML = '<h4>pts / sq. m</h4>' + labels.join('<br>');
-		return div;
-	};
-	pt_legend.addTo(map);
+    var density_legend_items = [];
+    counter = 0;
+    density_layer.eachLayer(function (layer) {
+        density_legend_items.push(
+            {
+                label: density_layer_classes[counter],
+                type: "circle",
+                radius: 6,
+                color: getColor(density_layer_classes[counter]),
+                fillColor: getColor(density_layer_classes[counter]),
+                // fillOpacity: 0.6,
+                // weight: 2,
+                layers: [layer]
+            }
+        )
+        counter++;
+    });
+    var density_legend = L.control.Legend({
+        title: "pts/sq. m",
+        position: "topright",
+        collapsed: false,
+        symbolWidth: 24,
+        opacity: 1,
+        column: 3,
+        legends: density_legend_items.sort((a,b) =>  a.label-b.label )
+    }).addTo(map);
 
 });
 </script>
